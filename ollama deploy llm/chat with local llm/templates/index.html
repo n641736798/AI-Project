@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>本地大模型问答</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #ddd; padding: 32px; }
+        h1 { text-align: center; margin-bottom: 24px; }
+        #chat { min-height: 300px; margin-bottom: 20px; }
+        .msg { margin: 12px 0; }
+        .user { color: #0078d7; font-weight: bold; }
+        .bot { color: #222; background: #f0f0f0; border-radius: 6px; padding: 8px 12px; display: inline-block; }
+        #prompt { width: 80%; padding: 8px; }
+        #send { padding: 8px 16px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>本地大模型问答</h1>
+    <div id="chat"></div>
+    <input type="text" id="prompt" placeholder="请输入你的问题..." autofocus />
+    <button id="send">发送</button>
+</div>
+<script>
+const chat = document.getElementById('chat');
+const promptInput = document.getElementById('prompt');
+const sendBtn = document.getElementById('send');
+
+function appendMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.innerHTML = role === 'user' ? `<span class="user">你：</span> ${text}` : `<span class="bot">${text}</span>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+sendBtn.onclick = async function() {
+    const prompt = promptInput.value.trim();
+    if (!prompt) return;
+    appendMsg('user', prompt);
+    promptInput.value = '';
+    appendMsg('bot', '思考中...');
+    const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    chat.lastChild.innerHTML = `<span class="bot">${data.answer}</span>`;
+};
+
+promptInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendBtn.onclick();
+});
+</script>
+</body>
+</html>
